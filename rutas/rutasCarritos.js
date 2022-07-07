@@ -1,14 +1,21 @@
 const express = require("express");
 const router = express.Router();
 
-const {guardarCarrito, carritoById, deletCarrito, deletProductosByCarrito, guardarProductosByCarrito} = require("../controlador/carritos")
+const { middlewareAutenticacion, middlewareAutorizacion } = require("../auth/auth")
 
-router.get("/:id/productos", carritoById);
 
-router.post("/", guardarCarrito);
-router.post("/:id/productos", guardarProductosByCarrito);
+const { guardarCarrito, carritoById, deletCarrito, deletProductosByCarrito, guardarProductosByCarrito } = require("../controlador/carritos")
 
-router.delete("/:id/productos/:id_prod", deletProductosByCarrito);
-router.delete("/:id", deletCarrito);
+
+//GET
+router.get("/:id/productos", middlewareAutenticacion, carritoById);
+
+//POST
+router.post("/", middlewareAutenticacion, guardarCarrito);
+router.post("/:id/productos", middlewareAutenticacion, guardarProductosByCarrito);
+
+//DELETE
+router.delete("/:id/productos/:id_prod", middlewareAutenticacion, deletProductosByCarrito);
+router.delete("/:id", middlewareAutenticacion, middlewareAutorizacion, deletCarrito);
 
 module.exports = router;

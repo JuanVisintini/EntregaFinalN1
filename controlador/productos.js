@@ -3,9 +3,9 @@ const Contendor = require('../modelo/contenedor');
 const producto = new Contendor("productos.json");
 
 const guardarProductos = async (req, res) => {
-    const { nombre, descripcion, codigo, fotoUrl, precio, stock} = req.body;
+    const { nombre, descripcion, codigo, fotoUrl, precio, stock } = req.body;
 
-    try{
+    try {
         const nuevoproducto = {
             nombre,
             descripcion,
@@ -14,62 +14,68 @@ const guardarProductos = async (req, res) => {
             precio,
             stock,
             timestamp: new Date()
-        } 
+        }
         const id = await producto.save(nuevoproducto);
         res.status(200).json(id)
     }
-    catch(e){
-        console.log(e);
+    catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
 const productosById = async (req, res) => {
     const id = req.params.id;
     try {
-        if(id) {
+        if (id) {
             const productById = await producto.getById(id);
-            if(productById) {
-            return res.status(200).json(productById);
+            if (productById) {
+                return res.status(200).json(productById);
             }
-            else{
-                console.log(`No hay productos con el id ${id}`)
+            else {
+                throw new Error("No encontrado");
             }
-        }else{
+        } else {
             const products = await producto.getAll();
-            if(products){
+            if (products) {
                 return res.status(200).json(products);
-            }else{
-                console.log(`No hay productos`)
+            } else {
+                throw new Error("No encontrado");
             }
         }
-    } catch(e){
-        console.log(e);
+    } catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
 const deletProduct = async (req, res) => {
-    try{
+    try {
         const id = req.params.id;
-        if(id){
+        if (id) {
             const productoEliminado = await producto.deleteById(id);
-            if(productoEliminado){
+            if (productoEliminado) {
                 res.status(200).json(`producto eleminado con el id: ${id}`)
-            }else{
-                console.log(`No existe el producto con el id: ${id}`)
+            } else {
+                throw new Error("No encontrado");
             }
         }
-    }catch(e){
-        console.log(e);
+    } catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
 const updateProducto = async (req, res) => {
     const id = req.params.id;
-    try{
-        const { nombre, descripcion, codigo, fotoUrl, precio, stock} = req.body;
+    try {
+        const { nombre, descripcion, codigo, fotoUrl, precio, stock } = req.body;
         const prodcutoUpdate = await producto.getById(id);
 
-        if(prodcutoUpdate){
+        if (prodcutoUpdate) {
             let nuevoObjeto = {
                 nombre: nombre || prodcutoUpdate.nombre,
                 descripcion: descripcion || prodcutoUpdate.descripcion,
@@ -78,14 +84,16 @@ const updateProducto = async (req, res) => {
                 precio: precio || prodcutoUpdate.precio,
                 stock: stock || prodcutoUpdate.stock
             };
-            
+
             nuevoObjeto = await producto.update(id, nuevoObjeto);
-            res.status(201).json({message: `se modifico el producto con el id: ${id}`, nuevoObjeto})
-        }else{
-            console.log(`No se encuentra el producto con el id ${id}`)
+            res.status(201).json({ message: `se modifico el producto con el id: ${id}`, nuevoObjeto })
+        } else {
+            throw new Error("No encontrado");
         }
-    }catch(e){
-        console.log(e);
+    } catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 

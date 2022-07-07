@@ -3,18 +3,22 @@ const Contendor = require('../modelo/contenedor');
 const carrito = new Contendor("carritos.json");
 const producto = new Contendor("productos.json");
 
-const guardarCarrito = async (req, res) => {
-    try{
-        const nuevoCarrito = {
-            producto: [],
-            timestam: new Date(),
 
-         }
+
+const guardarCarrito = async (req, res) => {
+    try {
+        const nuevoCarrito = {
+            timestamp: new Date(),
+            productos: [],
+
+        }
         const id = await carrito.save(nuevoCarrito);
         res.status(200).json(id)
-        } 
-    catch(e){
-        console.log(e);
+    }
+    catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
@@ -22,84 +26,92 @@ const carritoById = async (req, res) => {
     const id = req.params.id;
     try {
         const cartById = await carrito.getById(id);
-        if(cartById) {
-        return res.status(200).json(cartById);
+        if (cartById) {
+            return res.status(200).json(cartById);
         }
-        else{
-        console.log(`No hay carritos con el id ${id}`)
-        }    
-    } catch(e){
-        console.log(e);
-    }
-}
-
-const deletCarrito = async (req, res) => {
-    try{
-        const id = req.params.id;
-        if(id){
-            const carritoEliminado = await carrito.deleteById(id);
-            if(carritoEliminado){
-                res.status(200).json(`carrito eleminado con el id: ${id}`)
-            }else{
-                console.log(`No existe el carrito con el id: ${id}`)
-            }
+        else {
+            throw new Error("No encontrado");
         }
-    }catch(e){
-        console.log(e);
+    } catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
 const guardarProductosByCarrito = async (req, res) => {
     const id = req.params.id;
     const { idProducto } = req.body;
-    console.log(req.params)
-    console.log(req.body)
 
-        try{
-            if(idProducto){
+    try {
+        if (idProducto) {
             const cart = await carrito.getById(id);
             const product = await producto.getById(idProducto);
-            console.log(product)
-            if(cart && product){
-              cart.producto.push(product);
-              await carrito.update(id, cart);
-              return res.status(200).json(cart)
-            }else{
-                console.log(`no existe el carrito o el producto que estas pasando`)
-           }
-         }else{
-            console.log("no hay productos con ese id")
-         }
-            
-        }
-        catch(e){
-            console.log(e, "no paso nada")
-        }
-}
 
-const deletProductosByCarrito = async (req, res) => {
-    const {id, idProducts} = req.params;
-    try{
-        const cart = await carrito.getById(id);
-        let cartByProducts = cart.producto.find((element) => element.id == idProducts);
-        if(cartByProducts){
-            cartByProducts = cartByProducts.filter (producto => producto.id != idProducts);
-            cart.product = cartByProducts
-
-            const cartlist = cart.filter(cart => cart.id != idProducts);
-            cartlist.push(cart);
-
-            await carrito.updadte(id, cartlist);
-        }else{
-            console.log( "no existe el carrito")
+            if (cart && product) {
+                cart.productos.push(product);
+                await carrito.update(id, cart);
+                return res.status(200).json(cart)
+            }
+            else {
+                throw new Error("No encontrado");
+            }
+        } else {
+            throw new Error("No encontrado");
         }
 
     }
-    catch(e){
-        console.log(e);
+    catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
+    }
+}
+
+const deletCarrito = async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (id) {
+            const carritoEliminado = await carrito.deleteById(id);
+            if (carritoEliminado) {
+                res.status(200).json(`carrito eleminado con el id: ${id}`)
+            } else {
+                throw new Error("No encontrado");
+            }
+        }
+    } catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
+    }
+}
+
+
+
+const deletProductosByCarrito = async (req, res) => {
+    const id = req.params.id;
+    const idProducto = req.params.id_prod;
+
+    try {
+        if (id) {
+            let cart = await carrito.getById(id);
+            const cartByProducts = cart.productos.findIndex((element) => element.id == idProducto);
+            if (cartByProducts == -1) throw new Error("Producto no encontrado");
+            cart.productos.splice(cartByProducts, 1)
+            await carrito.update(id, cart);
+            return res.status(200).json(cart)
+        } else {
+            throw new Error("No encontrado");
+        }
+
+    }
+    catch (e) {
+        return res.status(400).json({
+            error: e.message,
+        });
     }
 }
 
 module.exports = {
-    guardarCarrito, carritoById, deletCarrito,deletProductosByCarrito, guardarProductosByCarrito
+    guardarCarrito, carritoById, deletCarrito, deletProductosByCarrito, guardarProductosByCarrito
 }
